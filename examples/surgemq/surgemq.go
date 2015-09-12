@@ -110,13 +110,14 @@ func main() {
 				}
 			}()
 		}
+		AddWebsocketHandler("/mqtt", addr)
 		/* start a plain websocket listener */
 		if len(wsAddr) > 0 {
-			go ListenAndServeWebsocket(wsAddr, "/mqtt", addr)
+			go ListenAndServeWebsocket(wsAddr)
 		}
 		/* start a secure websocket listener */
 		if len(wssAddr) > 0 && len(wssCertPath) > 0 && len(wssKeyPath) > 0 {
-			go ListenAndServeWebsocketSecure(wssAddr, "/mqtt", addr, wssCertPath, wssKeyPath)
+			go ListenAndServeWebsocketSecure(wssAddr, wssCertPath, wssKeyPath)
 		}
 	}
 

@@ -10,12 +10,14 @@ import (
 )
 
 func DefaultListenAndServeWebsocket() error {
-	return ListenAndServeWebsocket(":1234", "/mqtt", "test.mosquitto.org:1883")
+	if err := AddWebsocketHandler("/mqtt", "test.mosquitto.org:1883"); err != nil {
+		return err
+	}
+	return ListenAndServeWebsocket(":1234")
 }
 
-/* start a listener that proxies websocket <-> tcp */
-func ListenAndServeWebsocket(addr string, urlPattern string, uri string) error {
-	glog.Debugf("ListenAndServeWebsocket addr=%s, urlPattern=%s, uri=%s", addr, urlPattern, uri)
+func AddWebsocketHandler(urlPattern string, uri string) error {
+	glog.Debugf("AddWebsocketHandler urlPattern=%s, uri=%s", urlPattern, uri)
 	u, err := url.Parse(uri)
 	if err != nil {
 		glog.Errorf("surgemq/main: %v", err)
@@ -26,22 +28,16 @@ func ListenAndServeWebsocket(addr string, urlPattern string, uri string) error {
 		WebsocketTcpProxy(ws, u.Scheme, u.Host)
 	}
 	http.Handle(urlPattern, websocket.Handler(h))
+	return nil
+}
+
+/* start a listener that proxies websocket <-> tcp */
+func ListenAndServeWebsocket(addr string) error {
 	return http.ListenAndServe(addr, nil)
 }
 
 /* starts an HTTPS listener */
-func ListenAndServeWebsocketSecure(addr string, urlPattern string, uri string, cert string, key string) error {
-	glog.Debugf("ListenAndServeWebsocketSecure addr=%s, urlPattern=%s, uri=%s", addr, urlPattern, uri)
-	u, err := url.Parse(uri)
-	if err != nil {
-		glog.Errorf("surgemq/main: %v", err)
-		return err
-	}
-
-	h := func(ws *websocket.Conn) {
-		WebsocketTcpProxy(ws, u.Scheme, u.Host)
-	}
-	http.Handle(urlPattern, websocket.Handler(h))
+func ListenAndServeWebsocketSecure(addr string, cert string, key string) error {
 	return http.ListenAndServeTLS(addr, cert, key, nil)
 }
 
